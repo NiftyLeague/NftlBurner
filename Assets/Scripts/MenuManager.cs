@@ -10,7 +10,9 @@ public class MenuManager : MonoBehaviour
 	public AudioManager audioManager;
 	[Space]
 	public GameObject helpPanel;
+	public GameObject leaderboardPanel;
 	public GameObject burnPromptPanel;
+	public GameObject errorMessagePanel;
 	[Space]
 	public GameObject burnButton;
 	public GameObject helpButton;
@@ -60,6 +62,18 @@ public class MenuManager : MonoBehaviour
 		audioManager.PlaySound(AudioManager.SoundID.PressButton);
 		nftlBalance = 1000000;
 		UpdateNFTLAmountTexts();
+	}
+
+	public void LeaderboardTwitterButton()
+	{
+		Debug.Log("Visiting Twitter...");
+		audioManager.PlaySound(AudioManager.SoundID.PressButton);
+	}
+
+	public void LeaderboardDownloadButton()
+	{
+		Debug.Log("Downloading...");
+		audioManager.PlaySound(AudioManager.SoundID.PressButton);
 	}
 
 	public void BurnButton()
@@ -148,6 +162,7 @@ public class MenuManager : MonoBehaviour
 		helpButton.SetActive(!pressed);
 		connectButton.SetActive(!pressed);
 		nftlToBurnInputField.interactable = !pressed;
+		leaderboardPanel.SetActive(!pressed);
 	}
 
 	IEnumerator BurnTokens()
@@ -185,16 +200,19 @@ public class MenuManager : MonoBehaviour
 
 	IEnumerator ErrorMessagePlay()
 	{
-		errorMessageText.color = new Color32(255, 0, 0, 255);
+		//errorMessageText.color = new Color32(255, 0, 0, 255);
+		errorMessagePanel.SetActive(true);
 
 		yield return new WaitForSeconds(5);
 
-		Tween<float> scaleTween = new Tween<float>(255f, 0f, textTweenDuration, textTweenType);
-		while (!scaleTween.IsEnded())
-		{
-			yield return new WaitForEndOfFrame();
-			errorMessageText.color = new Color32(255, 0, 0, (byte)scaleTween.Update(Time.deltaTime));
-		}
+		errorMessagePanel.SetActive(false);
+
+		//Tween<float> scaleTween = new Tween<float>(255f, 0f, textTweenDuration, textTweenType);
+		//while (!scaleTween.IsEnded())
+		//{
+		//	yield return new WaitForEndOfFrame();
+		//	errorMessageText.color = new Color32(255, 0, 0, (byte)scaleTween.Update(Time.deltaTime));
+		//}
 	}
 
 	void BurnNFTLTokens()
