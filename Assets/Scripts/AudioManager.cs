@@ -61,21 +61,8 @@ public class AudioManager : MonoBehaviour
     public enum SoundID
     {
         None,
-        messagePopup,
-        projectileShoot,
-        projectileHit,
-        gainPoint,
-        lose,
-        batSwing,
-        playerLand,
-        menuOptionSelect,
-        playerJump,
-        batCharge,
-        playerFootstep,
-        playerBatSwingVoice,
-        ballMachineHit,
-        explosion,
-        projectileChargeHit,
-        insertCoin,
+        hoverOverButton,
+        PressButton,
+        ErrorMessage,
     }
 }
