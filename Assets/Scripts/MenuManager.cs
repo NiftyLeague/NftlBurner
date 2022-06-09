@@ -13,10 +13,10 @@ public class MenuManager : MonoBehaviour
 	public GameObject leaderboardPanel;
 	public GameObject burnPromptPanel;
 	public GameObject errorMessagePanel;
+	public GameObject connectingPanel;
 	[Space]
 	public GameObject burnButton;
 	public GameObject helpButton;
-	public GameObject connectButton;
 	[Space]
 	public uint nftlBalance;
 	public uint nftlToBurn;
@@ -24,6 +24,7 @@ public class MenuManager : MonoBehaviour
 	public TextMeshProUGUI nftlBalanceText;
 	public TextMeshProUGUI errorMessageText;
 	public TMP_InputField nftlToBurnInputField;
+	public TextMeshProUGUI connectingMessageText;
 	[Space]
 	public TweenEaseType textTweenType;
 	public float textTweenDuration;
@@ -34,14 +35,22 @@ public class MenuManager : MonoBehaviour
 	public SimpleAnim burningAnim;
 	public Sprite[] burningIdleAnimation;
 	public Sprite[] burningBurnAnimation;
+	[Space]
+	public List<TextMeshProUGUI> leaderboardNameText;
+	public List<TextMeshProUGUI> leaderboardAmountText;
+	[Space]
+	public bool cantConnect;
 
 	private Coroutine currentErrorMessageCoroutine;
 	private bool isBurning;
 	private float burnPromptTimer;
 
-    private void Start()
+	List<string> leaderboardNames;
+	List<uint> leaderboardAmounts;
+
+	private void Start()
     {
-		UpdateNFTLAmountTexts();
+		StartCoroutine(ConnectWallet());
     }
 
     private void Update()
@@ -56,12 +65,37 @@ public class MenuManager : MonoBehaviour
 		}
     }
 
-    public void ConnectWalletButton()
+    IEnumerator ConnectWallet()
 	{
-		Debug.Log("Connecting and Logging in Wallet...");
-		audioManager.PlaySound(AudioManager.SoundID.PressButton);
+		connectingMessageText.text = "Connecting To Wallet...";
+		connectingPanel.SetActive(true);
+		leaderboardPanel.SetActive(false);
+
+		yield return new WaitForSeconds(2);
+
+		if (cantConnect)
+		{
+			ConnectionFailed();
+		}
+		else
+		{
+			ConnectionSuccessful();
+		}
+	}
+
+	void ConnectionSuccessful()
+	{
+		connectingPanel.SetActive(false);
+		leaderboardPanel.SetActive(true);
 		nftlBalance = 1000000;
 		UpdateNFTLAmountTexts();
+		UpdateLeaderboard();
+	}
+
+	void ConnectionFailed()
+	{
+		connectingMessageText.text = "Cannot Connect. Please Check Internet Connection and Try Again.";
+		connectingMessageText.color = Color.red;
 	}
 
 	public void LeaderboardTwitterButton()
@@ -76,6 +110,46 @@ public class MenuManager : MonoBehaviour
 		audioManager.PlaySound(AudioManager.SoundID.PressButton);
 	}
 
+	void UpdateLeaderboard()
+	{
+		leaderboardNames = new List<string>();
+		leaderboardAmounts = new List<uint>();
+
+		//TEST LIST DELETE LATER
+		leaderboardNames.Add("matt higgins");
+		leaderboardNames.Add("gary vee");
+		leaderboardNames.Add("big jon");
+		leaderboardNames.Add("seiya");
+		leaderboardNames.Add("0x94894385345");
+		leaderboardNames.Add("max.eth");
+		leaderboardNames.Add("nifty chap");
+		leaderboardNames.Add("tessa");
+		leaderboardNames.Add("coolboi");
+		leaderboardNames.Add("bagz");
+
+		leaderboardAmounts.Add(2000009);
+		leaderboardAmounts.Add(2000000);
+		leaderboardAmounts.Add(500040);
+		leaderboardAmounts.Add(80000);
+		leaderboardAmounts.Add(75345);
+		leaderboardAmounts.Add(70000);
+		leaderboardAmounts.Add(69400);
+		leaderboardAmounts.Add(62000);
+		leaderboardAmounts.Add(500);
+		leaderboardAmounts.Add(2);
+
+		DisplayLeaderboard();
+	}
+
+	void DisplayLeaderboard()
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			leaderboardNameText[i].text = leaderboardNames[i].ToUpper();
+			leaderboardAmountText[i].text = leaderboardAmounts[i].ToString("n0");
+		}
+	}
+
 	public void BurnButton()
 	{
 		if (isBurning)
@@ -88,7 +162,9 @@ public class MenuManager : MonoBehaviour
 		{
 			ErrorMessage("Must input more than 0 NFTL to burn!");
 			return;
-		}	
+		}
+
+		CloseErrorMessage();
 
 		if (burnPromptPanel.activeInHierarchy)
 		{
@@ -111,6 +187,7 @@ public class MenuManager : MonoBehaviour
 	public void HoverOverHelp()
 	{
 		helpPanel.SetActive(true);
+		CloseErrorMessage();
 	}
 
 	public void ExitHelp()
@@ -160,7 +237,6 @@ public class MenuManager : MonoBehaviour
 
 		burnButton.SetActive(!pressed);
 		helpButton.SetActive(!pressed);
-		connectButton.SetActive(!pressed);
 		nftlToBurnInputField.interactable = !pressed;
 		leaderboardPanel.SetActive(!pressed);
 	}
@@ -186,16 +262,23 @@ public class MenuManager : MonoBehaviour
 
 	void ErrorMessage(string message)
 	{
-		if (currentErrorMessageCoroutine != null)
-		{
-			StopCoroutine(currentErrorMessageCoroutine);
-		}
+		CloseErrorMessage();
 
 		errorMessageText.text = message;
 
 		currentErrorMessageCoroutine = StartCoroutine(ErrorMessagePlay());
 
 		audioManager.PlaySound(AudioManager.SoundID.ErrorMessage);
+	}
+
+	void CloseErrorMessage()
+	{
+		errorMessagePanel.SetActive(false);
+
+		if (currentErrorMessageCoroutine != null)
+		{
+			StopCoroutine(currentErrorMessageCoroutine);
+		}
 	}
 
 	IEnumerator ErrorMessagePlay()
