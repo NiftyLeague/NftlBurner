@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using TMPro;
+using CodeStage.AntiCheat.ObscuredTypes;
 
 public class MenuManager : MonoBehaviour
 {
@@ -18,8 +19,8 @@ public class MenuManager : MonoBehaviour
 	public GameObject burnButton;
 	public GameObject helpButton;
 	[Space]
-	public uint nftlBalance;
-	public uint nftlToBurn;
+	public ObscuredUInt nftlBalance;
+	public ObscuredUInt nftlToBurn;
 	[Space]
 	public TextMeshProUGUI nftlBalanceText;
 	public TextMeshProUGUI errorMessageText;
@@ -36,17 +37,23 @@ public class MenuManager : MonoBehaviour
 	public Sprite[] burningIdleAnimation;
 	public Sprite[] burningBurnAnimation;
 	[Space]
+	public TextMeshProUGUI leaderboardTitleText;
 	public List<TextMeshProUGUI> leaderboardNameText;
 	public List<TextMeshProUGUI> leaderboardAmountText;
 	[Space]
-	public bool cantConnect;
+	public ObscuredBool cantConnect;
 
 	private Coroutine currentErrorMessageCoroutine;
-	private bool isBurning;
-	private float burnPromptTimer;
+	private ObscuredBool isBurning;
+	private ObscuredFloat burnPromptTimer;
 
-	List<string> leaderboardNames;
-	List<uint> leaderboardAmounts;
+	List<ObscuredString> leaderboardWeeklyNames;
+	List<ObscuredUInt> leaderboardWeeklyAmounts;
+	List<ObscuredString> leaderboardMonthlyNames;
+	List<ObscuredUInt> leaderboardMonthlyAmounts;
+	List<ObscuredString> leaderboardAlltimeNames;
+	List<ObscuredUInt> leaderboardAlltimeAmounts;
+	int leaderboardToShow;
 
 	private void Start()
     {
@@ -112,40 +119,126 @@ public class MenuManager : MonoBehaviour
 
 	void UpdateLeaderboard()
 	{
-		leaderboardNames = new List<string>();
-		leaderboardAmounts = new List<uint>();
+		leaderboardAlltimeNames = new List<ObscuredString>();
+		leaderboardAlltimeAmounts = new List<ObscuredUInt>();
 
 		//TEST LIST DELETE LATER
-		leaderboardNames.Add("matt higgins");
-		leaderboardNames.Add("gary vee");
-		leaderboardNames.Add("big jon");
-		leaderboardNames.Add("seiya");
-		leaderboardNames.Add("0x94894385345");
-		leaderboardNames.Add("max.eth");
-		leaderboardNames.Add("nifty chap");
-		leaderboardNames.Add("tessa");
-		leaderboardNames.Add("coolboi");
-		leaderboardNames.Add("bagz");
+		leaderboardAlltimeNames.Add("matt higgins");
+		leaderboardAlltimeNames.Add("gary vee");
+		leaderboardAlltimeNames.Add("big jon");
+		leaderboardAlltimeNames.Add("seiya");
+		leaderboardAlltimeNames.Add("0x94894385345");
+		leaderboardAlltimeNames.Add("max.eth");
+		leaderboardAlltimeNames.Add("nifty chap");
+		leaderboardAlltimeNames.Add("tessa");
+		leaderboardAlltimeNames.Add("coolboi");
+		leaderboardAlltimeNames.Add("bagz");
 
-		leaderboardAmounts.Add(2000009);
-		leaderboardAmounts.Add(2000000);
-		leaderboardAmounts.Add(500040);
-		leaderboardAmounts.Add(80000);
-		leaderboardAmounts.Add(75345);
-		leaderboardAmounts.Add(70000);
-		leaderboardAmounts.Add(69400);
-		leaderboardAmounts.Add(62000);
-		leaderboardAmounts.Add(500);
-		leaderboardAmounts.Add(2);
+		leaderboardAlltimeAmounts.Add(2000009);
+		leaderboardAlltimeAmounts.Add(2000000);
+		leaderboardAlltimeAmounts.Add(500040);
+		leaderboardAlltimeAmounts.Add(80000);
+		leaderboardAlltimeAmounts.Add(75345);
+		leaderboardAlltimeAmounts.Add(70000);
+		leaderboardAlltimeAmounts.Add(69400);
+		leaderboardAlltimeAmounts.Add(62000);
+		leaderboardAlltimeAmounts.Add(500);
+		leaderboardAlltimeAmounts.Add(8);
+
+		leaderboardMonthlyNames = new List<ObscuredString>();
+		leaderboardMonthlyAmounts = new List<ObscuredUInt>();
+
+		//TEST LIST DELETE LATER
+		leaderboardMonthlyNames.Add("timmy tims");
+		leaderboardMonthlyNames.Add("reginald");
+		leaderboardMonthlyNames.Add("snow");
+		leaderboardMonthlyNames.Add("bootyman");
+		leaderboardMonthlyNames.Add("robot94993");
+		leaderboardMonthlyNames.Add("other tim");
+		leaderboardMonthlyNames.Add("i love nifty stuff");
+		leaderboardMonthlyNames.Add("life is good");
+		leaderboardMonthlyNames.Add("bigbrainz");
+		leaderboardMonthlyNames.Add("diamondhands");
+
+		leaderboardMonthlyAmounts.Add(200009);
+		leaderboardMonthlyAmounts.Add(200000);
+		leaderboardMonthlyAmounts.Add(50400);
+		leaderboardMonthlyAmounts.Add(8000);
+		leaderboardMonthlyAmounts.Add(745);
+		leaderboardMonthlyAmounts.Add(700);
+		leaderboardMonthlyAmounts.Add(694);
+		leaderboardMonthlyAmounts.Add(620);
+		leaderboardMonthlyAmounts.Add(50);
+		leaderboardMonthlyAmounts.Add(5);
+
+		leaderboardWeeklyNames = new List<ObscuredString>();
+		leaderboardWeeklyAmounts = new List<ObscuredUInt>();
+
+		//TEST LIST DELETE LATER
+		leaderboardWeeklyNames.Add("george clooney");
+		leaderboardWeeklyNames.Add("brad pitt");
+		leaderboardWeeklyNames.Add("matt damon");
+		leaderboardWeeklyNames.Add("don cheadle");
+		leaderboardWeeklyNames.Add("elliot gould");
+		leaderboardWeeklyNames.Add("casey affleck");
+		leaderboardWeeklyNames.Add("eddie jemison");
+		leaderboardWeeklyNames.Add("shaobo qin");
+		leaderboardWeeklyNames.Add("carl reiner");
+		leaderboardWeeklyNames.Add("bernie mac");
+
+		leaderboardWeeklyAmounts.Add(20090);
+		leaderboardWeeklyAmounts.Add(20000);
+		leaderboardWeeklyAmounts.Add(5400);
+		leaderboardWeeklyAmounts.Add(800);
+		leaderboardWeeklyAmounts.Add(73);
+		leaderboardWeeklyAmounts.Add(70);
+		leaderboardWeeklyAmounts.Add(69);
+		leaderboardWeeklyAmounts.Add(62);
+		leaderboardWeeklyAmounts.Add(5);
+		leaderboardWeeklyAmounts.Add(2);
 
 		DisplayLeaderboard();
 	}
 
+	public void ChangeCurrentLeaderboard()
+	{
+		leaderboardToShow++;
+		if (leaderboardToShow >= 3)
+		{
+			leaderboardToShow = 0;
+		}
+		DisplayLeaderboard();
+		audioManager.PlaySound(AudioManager.SoundID.PressButton);
+	}
+
 	void DisplayLeaderboard()
 	{
+		List<ObscuredString> leaderboardNames = new List<ObscuredString>();
+		List<ObscuredUInt> leaderboardAmounts = new List<ObscuredUInt>();
+
+		switch (leaderboardToShow)
+		{
+			case 0:
+				leaderboardTitleText.text = "WEEKLY LEADERBOARD";
+				leaderboardNames = leaderboardWeeklyNames;
+				leaderboardAmounts = leaderboardWeeklyAmounts;
+				break;
+			case 1:
+				leaderboardTitleText.text = "MONTHLY LEADERBOARD";
+				leaderboardNames = leaderboardMonthlyNames;
+				leaderboardAmounts = leaderboardMonthlyAmounts;
+				break;
+			case 2:
+				leaderboardTitleText.text = "ALLTIME LEADERBOARD";
+				leaderboardNames = leaderboardAlltimeNames;
+				leaderboardAmounts = leaderboardAlltimeAmounts;
+				break;
+		}
+
 		for (int i = 0; i < 10; i++)
 		{
-			leaderboardNameText[i].text = leaderboardNames[i].ToUpper();
+			string nextName = leaderboardNames[i];
+			leaderboardNameText[i].text = nextName.ToUpper();
 			leaderboardAmountText[i].text = leaderboardAmounts[i].ToString("n0");
 		}
 	}
