@@ -122,12 +122,14 @@ public class MenuManager : Singleton<MenuManager>
 	public void LeaderboardTwitterButton()
 	{
 		Debug.Log("Visiting Twitter...");
+		CloseErrorMessage();
 		audioManager.PlaySound(AudioManager.SoundID.PressButton);
 	}
 
 	public void LeaderboardDownloadButton()
 	{
 		Debug.Log("Downloading...");
+		CloseErrorMessage();
 		audioManager.PlaySound(AudioManager.SoundID.PressButton);
 	}
 
@@ -216,6 +218,7 @@ public class MenuManager : Singleton<MenuManager>
 
 	public void ChangeCurrentLeaderboard()
 	{
+		CloseErrorMessage();
 		leaderboardToShow++;
 		if (leaderboardToShow >= 3)
 		{
