@@ -23,8 +23,8 @@ public class Launcher : MonoBehaviour
 	private string interimAuthToken = "";
 	private float startDelay;
 	private int verificationTries = 0;
-	private int fetchCharacterTries = 0;
-	private HashSet<int> favoriteDegens = new HashSet<int>();
+	//private int fetchCharacterTries = 0;
+	//private HashSet<int> favoriteDegens = new HashSet<int>();
 	private float lastVerificationTokenCheck = 0f;
 
 	internal static string apiNetwork;
@@ -35,7 +35,7 @@ public class Launcher : MonoBehaviour
 	internal static string shortSessionId;
 	internal static string verificationToken;
 	internal static bool ranked;
-	private HashSet<int> degens = new HashSet<int>();
+	//private HashSet<int> degens = new HashSet<int>();
 
 
 #if UNITY_STANDALONE && !UNITY_EDITOR
@@ -70,7 +70,7 @@ public class Launcher : MonoBehaviour
 
 	private void Start()
 	{
-		//MainMenuManager.SetStatus("Initializing Configuration");
+		MenuManager.Instance.SetStatus("Initializing Configuration");
 	}
 
 	private bool IsTicketValid(string ticket)
@@ -113,7 +113,7 @@ public class Launcher : MonoBehaviour
 	private void StartAuthentication()
 	{
 		state = State.Authentication;
-		//MainMenuManager.SetStatus("Authenticating");
+		MenuManager.Instance.SetStatus("Authenticating");
 #if UNITY_WEBGL || UNITY_EDITOR
 		JSWrapper.StartAuthentication(gameObject.name, nameof(OnAuthencationResponse));
 #else
@@ -125,7 +125,7 @@ public class Launcher : MonoBehaviour
 	{
 		lastVerificationTokenCheck = Time.realtimeSinceStartup + 5f;
 		state = State.Verification;
-		//MainMenuManager.SetStatus("Verifying Account");
+		MenuManager.Instance.SetStatus("Verifying Account");
 		string cachedVerification = GetCachedVerification();
 		if (!string.IsNullOrEmpty(cachedVerification))
 		{
@@ -137,7 +137,7 @@ public class Launcher : MonoBehaviour
 #if UNITY_WEBGL
 			StartCoroutine(VerifyWebGlAuthTokenAndLogin(address, interimAuthToken));
 #else
-			//MainMenuManager.SetStatus("Please Verify your Account on your Browser");
+			MenuManager.Instance.SetStatus("Please Verify your Account on your Browser");
 			string hexFormat = "X";
 			string sess = sessionId.Replace("-", "");
 			string guid3 = $"{Guid.NewGuid()}-{Guid.NewGuid()}-{Guid.NewGuid()}".Replace("-", "");
@@ -390,7 +390,7 @@ public class Launcher : MonoBehaviour
 	private void InitializeProfile()
 	{
 		state = State.Initialization;
-		//MainMenuManager.SetStatus("Initializing Profile");
+		MenuManager.Instance.SetStatus("Initializing Profile");
 
 		StartCoroutine(_InitializeProfile(user.address));
 
@@ -399,10 +399,10 @@ public class Launcher : MonoBehaviour
 
 	private void ProfileDegensReady()
 	{
-		user.SetDegens(degens.ToList());
+		//user.SetDegens(degens.ToList());
 		//PlayerSpriteManager.InitializeAvailableDegens(degens.ToList());
-		//MainMenuManager.Initialize();
-		//MainMenuManager.SetTokenBalance(user.arcadeTokenBalance);
+		MenuManager.Instance.Initialize();
+		//MenuManager.Instance.SetTokenBalance(user.arcadeTokenBalance);
 	}
 
 	[Beebyte.Obfuscator.SkipRename]
@@ -437,7 +437,7 @@ public class Launcher : MonoBehaviour
 			interimUserAddress = address.ToLower();
 			interimAuthToken = tokens[3];
 
-			favoriteDegens = new HashSet<int>();
+			//favoriteDegens = new HashSet<int>();
 			if (tokens.Length > 4)
 			{
 				for (int i = 4; i < tokens.Length; i++)
@@ -448,7 +448,7 @@ public class Launcher : MonoBehaviour
 						int.TryParse(tokens[i], out degenId);
 						if (degenId > 0)
 						{
-							favoriteDegens.Add(degenId);
+							//favoriteDegens.Add(degenId);
 						}
 					}
 				}
@@ -492,7 +492,7 @@ public class Launcher : MonoBehaviour
 
 	private void Fail(string message)
 	{
-		//MainMenuManager.SetStatus(message);
+		MenuManager.Instance.SetStatus(message);
 		state = State.Failure;
 	}
 
@@ -634,7 +634,6 @@ MinAllowedVersion,0.1.1,Please Upgrade To the Latest Version
 		bool isValidSession = false;
 		bool isBanned = false;
 		uint balance = 0;
-		uint arcadeTokenBalance = 0;
 		yield return Utils.GetRequest("https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/accounts/account", (w) => www = w, headers);
 		if (www.result != UnityWebRequest.Result.Success)
 		{
@@ -648,8 +647,6 @@ MinAllowedVersion,0.1.1,Please Upgrade To the Latest Version
 				JObject account = JObject.Parse(www.downloadHandler.text);
 				isBanned = account["is_banned"] != null && account["is_banned"].Value<bool>();
 				isValidSession = account["session_key"].Value<string>() == sessionId;
-				balance = account["balance"] != null ? (uint)account["balance"] : 0;
-				arcadeTokenBalance = account["arcade_token_balance"] != null ? (uint)account["arcade_token_balance"] : 0;
 
 			}
 			catch
@@ -670,10 +667,58 @@ MinAllowedVersion,0.1.1,Please Upgrade To the Latest Version
 			yield break;
 		}
 
-		/*yield return Utils.GetRequest("https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/stats/profile", (w) => www = w, headers);
+		user.SetBalance(balance);
+
+		yield return RefreshNFTLBalance();
+		//yield return GetDegens();
+
+		ProfileDegensReady();
+	}
+
+	public IEnumerator RefreshNFTLBalance()
+	{
+		UnityWebRequest www = null;
+		Dictionary<string, string> headers = new Dictionary<string, string>
+		{
+			{ "authorizationToken", NiftyUsers.GetMyAuthorization() },
+		};
+		yield return Utils.GetRequest("https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/accounts/account", (w) => www = w, headers);
+
+		uint nftlBalance = 0;
 		if (www.result != UnityWebRequest.Result.Success)
 		{
-			Fail("Failed to fetch game profile");
+			Fail("Failed to fetch inventory");
+			yield break;
+		}
+		else
+		{
+			try
+			{
+				JObject inventory = JObject.Parse(www.downloadHandler.text);
+				float nftlBalanceFromInventory = inventory["balance"] != null ? (float)inventory["balance"] : 0;
+				nftlBalance = (uint)Mathf.FloorToInt(nftlBalanceFromInventory);
+				user.SetNFTLBalance(nftlBalance);
+			}
+			catch
+			{
+				Debug.Log("Failed to update NFTL Token balance");
+			}
+		}
+	}
+
+	public IEnumerator StartNewMatch()
+	{
+		UnityWebRequest www = null;
+		Dictionary<string, string> headers = new Dictionary<string, string>
+		{
+			{ "authorizationToken", NiftyUsers.GetMyAuthorization() },
+		};
+		yield return Utils.GetRequest("https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/matches/wen-game/start", (w) => www = w, headers);
+
+		uint arcadeBalance = 0;
+		if (www.result != UnityWebRequest.Result.Success)
+		{
+			Fail("Failed to Insert Token");
 			yield break;
 		}
 		else
@@ -681,61 +726,61 @@ MinAllowedVersion,0.1.1,Please Upgrade To the Latest Version
 			try
 			{
 				print(www.downloadHandler.text);
-				JObject account = JObject.Parse(www.downloadHandler.text);
-				isValidSession = account["session_key"].Value<string>() == sessionId;
+				JObject inventory = JObject.Parse(www.downloadHandler.text);
+				arcadeBalance = inventory["balance"] != null ? (uint)inventory["balance"] : 0;
+				user.SetNFTLBalance(arcadeBalance);
 			}
 			catch
 			{
-				isValidSession = false;
-			}
-		}*/
-
-		user.SetBalances(balance, arcadeTokenBalance);
-		yield return GetDegens();
-
-		ProfileDegensReady();
-	}
-
-	private IEnumerator GetDegens()
-	{
-		string result = null;
-		yield return WebRequestHelper.GetRequest("https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/profiles/profile/avatars",
-			"", true, false, resp => result = resp);
-		degens = new HashSet<int>();
-		try
-		{
-			JObject avatars = JObject.Parse(result);
-			foreach (JObject avatar in avatars["avatars"])
-			{
-				try
-				{
-					int tokenId = avatar["id"].Value<int>();
-					degens.Add(tokenId);
-				}
-				catch (Exception ex)
-				{
-					Debug.LogWarning("Failed to add a degen to profile");
-					Debug.LogError(ex);
-				}
+				Debug.Log("Failed to update Arcade Token balance");
 			}
 		}
-		catch (Exception e)
-		{
-			print(e);
-		}
 	}
+
+
+	//private IEnumerator GetDegens()
+	//{
+	//	string result = null;
+	//	yield return WebRequestHelper.GetRequest("https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/profiles/profile/avatars",
+	//		"", true, false, resp => result = resp);
+	//	degens = new HashSet<int>();
+	//	try
+	//	{
+	//		JObject avatars = JObject.Parse(result);
+	//		foreach (JObject avatar in avatars["avatars"])
+	//		{
+	//			try
+	//			{
+	//				int tokenId = avatar["id"].Value<int>();
+	//				degens.Add(tokenId);
+	//			}
+	//			catch (Exception ex)
+	//			{
+	//				Debug.LogWarning("Failed to add a degen to profile");
+	//				Debug.LogError(ex);
+	//			}
+	//		}
+	//	}
+	//	catch (Exception e)
+	//	{
+	//		print(result);
+	//		print(e);
+	//	}
+	//}
 
 	private void ProfileInitializationFailed()
 	{
-		if (fetchCharacterTries <= 3)
-		{
-			Fail("Failed to initialize your profile\nRetrying...");
-			Invoke(nameof(InitializeProfile), 3f + fetchCharacterTries);
-		}
-		else
-		{
-			Fail("Failed to initialize your profile");
-		}
+		//if (fetchCharacterTries <= 3)
+		//{
+		//	Fail("Failed to initialize your profile\nRetrying...");
+		//	Invoke(nameof(InitializeProfile), 3f + fetchCharacterTries);
+		//}
+		//else
+		//{
+		//	Fail("Failed to initialize your profile");
+		//}
+
+		Fail("Failed to initialize your profile");
 	}
 
 

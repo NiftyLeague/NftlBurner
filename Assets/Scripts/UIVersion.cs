@@ -1,12 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 
 public class UIVersion : MonoBehaviour
 {
-	public Text version;
-	public Text session;
+	public TextMeshProUGUI version;
+	public TextMeshProUGUI session;
 
 
 	void Start()

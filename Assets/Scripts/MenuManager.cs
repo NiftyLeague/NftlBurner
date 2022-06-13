@@ -6,7 +6,7 @@ using System;
 using TMPro;
 using CodeStage.AntiCheat.ObscuredTypes;
 
-public class MenuManager : MonoBehaviour
+public class MenuManager : Singleton<MenuManager>
 {
 	public AudioManager audioManager;
 	[Space]
@@ -57,8 +57,9 @@ public class MenuManager : MonoBehaviour
 
 	private void Start()
     {
-		StartCoroutine(ConnectWallet());
-    }
+		connectingPanel.SetActive(true);
+		leaderboardPanel.SetActive(false);
+	}
 
     private void Update()
     {
@@ -72,9 +73,24 @@ public class MenuManager : MonoBehaviour
 		}
     }
 
+	public void SetStatus(string statusMessage)
+	{
+		connectingMessageText.text = statusMessage;
+	}
+
+	public void UpdateNFTLBalance(ObscuredUInt amount)
+	{
+		nftlBalance = amount;
+		UpdateNFTLAmountTexts();
+	}
+
+	public void Initialize()
+	{
+		ConnectionSuccessful();
+	}
+
     IEnumerator ConnectWallet()
 	{
-		connectingMessageText.text = "Connecting To Wallet...";
 		connectingPanel.SetActive(true);
 		leaderboardPanel.SetActive(false);
 
@@ -94,8 +110,6 @@ public class MenuManager : MonoBehaviour
 	{
 		connectingPanel.SetActive(false);
 		leaderboardPanel.SetActive(true);
-		nftlBalance = 1000000;
-		UpdateNFTLAmountTexts();
 		UpdateLeaderboard();
 	}
 
