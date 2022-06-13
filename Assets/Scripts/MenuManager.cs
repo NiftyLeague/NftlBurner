@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Text;
 using TMPro;
 using CodeStage.AntiCheat.ObscuredTypes;
+using UnityEngine.Networking;
 
 public class MenuManager : Singleton<MenuManager>
 {
@@ -110,7 +112,7 @@ public class MenuManager : Singleton<MenuManager>
 	{
 		connectingPanel.SetActive(false);
 		leaderboardPanel.SetActive(true);
-		UpdateLeaderboard();
+		UpdateLeaderboards();
 	}
 
 	void ConnectionFailed()
@@ -133,7 +135,7 @@ public class MenuManager : Singleton<MenuManager>
 		audioManager.PlaySound(AudioManager.SoundID.PressButton);
 	}
 
-	void UpdateLeaderboard()
+	void UpdateLeaderboards()
 	{
 		leaderboardAlltimeNames = new List<ObscuredString>();
 		leaderboardAlltimeAmounts = new List<ObscuredUInt>();
@@ -363,11 +365,15 @@ public class MenuManager : Singleton<MenuManager>
 
 		burningAnim.Play(burningIdleAnimation, false);
 
+		yield return SubmitTokenBurn();
+
+		yield return Launcher.I.RefreshNFTLBalance();
+
+		UpdateLeaderboards();
+
 		isBurning = false;
 
 		ChangeBurnButtonState(false);
-
-		BurnNFTLTokens();
 	}
 
 	void ErrorMessage(string message)
@@ -393,26 +399,36 @@ public class MenuManager : Singleton<MenuManager>
 
 	IEnumerator ErrorMessagePlay()
 	{
-		//errorMessageText.color = new Color32(255, 0, 0, 255);
 		errorMessagePanel.SetActive(true);
 
 		yield return new WaitForSeconds(5);
 
 		errorMessagePanel.SetActive(false);
-
-		//Tween<float> scaleTween = new Tween<float>(255f, 0f, textTweenDuration, textTweenType);
-		//while (!scaleTween.IsEnded())
-		//{
-		//	yield return new WaitForEndOfFrame();
-		//	errorMessageText.color = new Color32(255, 0, 0, (byte)scaleTween.Update(Time.deltaTime));
-		//}
 	}
 
-	void BurnNFTLTokens()
+	public IEnumerator SubmitTokenBurn()
 	{
-		nftlBalance -= nftlToBurn;
-		nftlToBurn = 0;
-		UpdateNFTLAmountTexts();
+		UnityWebRequest www = null;
+		Dictionary<string, string> headers = new Dictionary<string, string>
+		{
+			{ "authorizationToken", NiftyUsers.GetMyAuthorization() },
+		};
+		byte[] data = Encoding.ASCII.GetBytes(@"{
+			'id': 'token-burn',
+			'currency': 'nftl',
+			'price': nftlToBurn
+		}".Replace('\'', '"'));
+		yield return Utils.PostRequest("www.google.com", data, (w) => www = w, headers);
+
+		if (www.result != UnityWebRequest.Result.Success)
+		{
+			print("Failed to fetch inventory");
+			yield break;
+		}
+		else
+		{
+			print(www.downloadHandler.text);
+		}
 	}
 
 	void UpdateNFTLAmountTexts()
