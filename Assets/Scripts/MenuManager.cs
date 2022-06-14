@@ -1,9 +1,12 @@
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Linq;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
-using System;
-using System.Text;
 using TMPro;
 using CodeStage.AntiCheat.ObscuredTypes;
 using UnityEngine.Networking;
@@ -55,7 +58,8 @@ public class MenuManager : Singleton<MenuManager>
 	List<ObscuredUInt> leaderboardMonthlyAmounts;
 	List<ObscuredString> leaderboardAlltimeNames;
 	List<ObscuredUInt> leaderboardAlltimeAmounts;
-	int leaderboardToShow;
+	LeaderboardType leaderboardType;
+	private static OrderedDictionary leaderboardRows;
 
 	private void Start()
     {
@@ -137,94 +141,16 @@ public class MenuManager : Singleton<MenuManager>
 
 	void UpdateLeaderboards()
 	{
-		leaderboardAlltimeNames = new List<ObscuredString>();
-		leaderboardAlltimeAmounts = new List<ObscuredUInt>();
-
-		//TEST LIST DELETE LATER
-		leaderboardAlltimeNames.Add("matt higgins");
-		leaderboardAlltimeNames.Add("gary vee");
-		leaderboardAlltimeNames.Add("big jon");
-		leaderboardAlltimeNames.Add("seiya");
-		leaderboardAlltimeNames.Add("0x94894385345");
-		leaderboardAlltimeNames.Add("max.eth");
-		leaderboardAlltimeNames.Add("nifty chap");
-		leaderboardAlltimeNames.Add("tessa");
-		leaderboardAlltimeNames.Add("coolboi");
-		leaderboardAlltimeNames.Add("bagz");
-
-		leaderboardAlltimeAmounts.Add(2000009);
-		leaderboardAlltimeAmounts.Add(2000000);
-		leaderboardAlltimeAmounts.Add(500040);
-		leaderboardAlltimeAmounts.Add(80000);
-		leaderboardAlltimeAmounts.Add(75345);
-		leaderboardAlltimeAmounts.Add(70000);
-		leaderboardAlltimeAmounts.Add(69400);
-		leaderboardAlltimeAmounts.Add(62000);
-		leaderboardAlltimeAmounts.Add(500);
-		leaderboardAlltimeAmounts.Add(8);
-
-		leaderboardMonthlyNames = new List<ObscuredString>();
-		leaderboardMonthlyAmounts = new List<ObscuredUInt>();
-
-		//TEST LIST DELETE LATER
-		leaderboardMonthlyNames.Add("timmy tims");
-		leaderboardMonthlyNames.Add("reginald");
-		leaderboardMonthlyNames.Add("snow");
-		leaderboardMonthlyNames.Add("bootyman");
-		leaderboardMonthlyNames.Add("robot94993");
-		leaderboardMonthlyNames.Add("other tim");
-		leaderboardMonthlyNames.Add("i love nifty stuff");
-		leaderboardMonthlyNames.Add("life is good");
-		leaderboardMonthlyNames.Add("bigbrainz");
-		leaderboardMonthlyNames.Add("diamondhands");
-
-		leaderboardMonthlyAmounts.Add(200009);
-		leaderboardMonthlyAmounts.Add(200000);
-		leaderboardMonthlyAmounts.Add(50400);
-		leaderboardMonthlyAmounts.Add(8000);
-		leaderboardMonthlyAmounts.Add(745);
-		leaderboardMonthlyAmounts.Add(700);
-		leaderboardMonthlyAmounts.Add(694);
-		leaderboardMonthlyAmounts.Add(620);
-		leaderboardMonthlyAmounts.Add(50);
-		leaderboardMonthlyAmounts.Add(5);
-
-		leaderboardWeeklyNames = new List<ObscuredString>();
-		leaderboardWeeklyAmounts = new List<ObscuredUInt>();
-
-		//TEST LIST DELETE LATER
-		leaderboardWeeklyNames.Add("george clooney");
-		leaderboardWeeklyNames.Add("brad pitt");
-		leaderboardWeeklyNames.Add("matt damon");
-		leaderboardWeeklyNames.Add("don cheadle");
-		leaderboardWeeklyNames.Add("elliot gould");
-		leaderboardWeeklyNames.Add("casey affleck");
-		leaderboardWeeklyNames.Add("eddie jemison");
-		leaderboardWeeklyNames.Add("shaobo qin");
-		leaderboardWeeklyNames.Add("carl reiner");
-		leaderboardWeeklyNames.Add("bernie mac");
-
-		leaderboardWeeklyAmounts.Add(20090);
-		leaderboardWeeklyAmounts.Add(20000);
-		leaderboardWeeklyAmounts.Add(5400);
-		leaderboardWeeklyAmounts.Add(800);
-		leaderboardWeeklyAmounts.Add(73);
-		leaderboardWeeklyAmounts.Add(70);
-		leaderboardWeeklyAmounts.Add(69);
-		leaderboardWeeklyAmounts.Add(62);
-		leaderboardWeeklyAmounts.Add(5);
-		leaderboardWeeklyAmounts.Add(2);
-
 		DisplayLeaderboard();
 	}
 
 	public void ChangeCurrentLeaderboard()
 	{
 		CloseErrorMessage();
-		leaderboardToShow++;
-		if (leaderboardToShow >= 3)
+		leaderboardType++;
+		if (leaderboardType > LeaderboardType.AllTime)
 		{
-			leaderboardToShow = 0;
+			leaderboardType = LeaderboardType.Weekly;
 		}
 		DisplayLeaderboard();
 		audioManager.PlaySound(AudioManager.SoundID.PressButton);
@@ -232,33 +158,113 @@ public class MenuManager : Singleton<MenuManager>
 
 	void DisplayLeaderboard()
 	{
-		List<ObscuredString> leaderboardNames = new List<ObscuredString>();
-		List<ObscuredUInt> leaderboardAmounts = new List<ObscuredUInt>();
+		StartCoroutine(UpdateLeaderboardDisplay());
 
-		switch (leaderboardToShow)
+		//List<ObscuredString> leaderboardNames = new List<ObscuredString>();
+		//List<ObscuredUInt> leaderboardAmounts = new List<ObscuredUInt>();
+
+		//switch (leaderboardToShow)
+		//{
+		//	case 0:
+		//		leaderboardTitleText.text = "WEEKLY LEADERBOARD";
+		//		leaderboardNames = leaderboardWeeklyNames;
+		//		leaderboardAmounts = leaderboardWeeklyAmounts;
+		//		break;
+		//	case 1:
+		//		leaderboardTitleText.text = "MONTHLY LEADERBOARD";
+		//		leaderboardNames = leaderboardMonthlyNames;
+		//		leaderboardAmounts = leaderboardMonthlyAmounts;
+		//		break;
+		//	case 2:
+		//		leaderboardTitleText.text = "ALLTIME LEADERBOARD";
+		//		leaderboardNames = leaderboardAlltimeNames;
+		//		leaderboardAmounts = leaderboardAlltimeAmounts;
+		//		break;
+		//}
+
+		//for (int i = 0; i < 10; i++)
+		//{
+		//	string nextName = leaderboardNames[i];
+		//	leaderboardNameText[i].text = nextName.ToUpper();
+		//	leaderboardAmountText[i].text = leaderboardAmounts[i].ToString("n0");
+		//}
+	}
+
+	private IEnumerator UpdateLeaderboardDisplay()
+	{
+		// display loading
+		yield return FetchLeaderboardData(leaderboardType);
+		int count = 0;
+		foreach (var row in leaderboardRows.Values.Cast<LeaderboardRow>())
 		{
-			case 0:
-				leaderboardTitleText.text = "WEEKLY LEADERBOARD";
-				leaderboardNames = leaderboardWeeklyNames;
-				leaderboardAmounts = leaderboardWeeklyAmounts;
-				break;
-			case 1:
-				leaderboardTitleText.text = "MONTHLY LEADERBOARD";
-				leaderboardNames = leaderboardMonthlyNames;
-				leaderboardAmounts = leaderboardMonthlyAmounts;
-				break;
-			case 2:
-				leaderboardTitleText.text = "ALLTIME LEADERBOARD";
-				leaderboardNames = leaderboardAlltimeNames;
-				leaderboardAmounts = leaderboardAlltimeAmounts;
-				break;
+			leaderboardNameText[count].text = $"{row.username}\n";
+			leaderboardAmountText[count].text = row.score.ToString("n0") + "\n";
+			count++;
 		}
 
-		for (int i = 0; i < 10; i++)
+		for (int i = count; i < 10; i++)
 		{
-			string nextName = leaderboardNames[i];
-			leaderboardNameText[i].text = nextName.ToUpper();
-			leaderboardAmountText[i].text = leaderboardAmounts[i].ToString("n0");
+			leaderboardNameText[i].text = "---\n";
+			leaderboardAmountText[i].text = "---\n";
+		}
+	}
+
+	IEnumerator FetchLeaderboardData(LeaderboardType type)
+	{
+		leaderboardRows = new OrderedDictionary(10);
+		UnityWebRequest www = null;
+		yield return Utils.GetRequest("https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/scores?count=10&game=wen_game&score_type=score", (w) => www = w);
+		if (www.result != UnityWebRequest.Result.Success)
+		{
+			print("Failed to fetch leaderboard data");
+			yield break;
+		}
+		else
+		{
+			try
+			{
+				JObject response = JObject.Parse(www.downloadHandler.text);
+				foreach (JObject row in response["data"])
+				{
+					var lbRow = new LeaderboardRow();
+					lbRow.userId = (string)row["user_id"];
+					lbRow.score = (int)(float)row["score"];
+					leaderboardRows.Add(lbRow.userId, lbRow);
+				}
+			}
+			catch
+			{
+				Debug.Log("Failed to update Arcade Token balance");
+			}
+		}
+
+		string ids = string.Join(",", leaderboardRows.Keys.Cast<string>());
+		www = null;
+		yield return Utils.GetRequest($"https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/profiles/public/profiles?ids={ids}", (w) => www = w);
+		if (www.result != UnityWebRequest.Result.Success)
+		{
+			print("Failed to fetch profile names");
+			yield break;
+		}
+		else
+		{
+			try
+			{
+				JObject profiles = JObject.Parse(www.downloadHandler.text);
+				foreach (var profile in profiles)
+				{
+					LeaderboardRow lbRow = leaderboardRows[profile.Key] as LeaderboardRow;
+					lbRow.username = (string)profile.Value["name_cased"];
+					if (profile.Value["avatar"] != null && profile.Value["avatar"]["id"] != null)
+					{
+						lbRow.avatar = (string)profile.Value["avatar"]["id"];
+					}
+				}
+			}
+			catch
+			{
+				Debug.Log("Failed to update Arcade Token balance");
+			}
 		}
 	}
 
@@ -436,4 +442,19 @@ public class MenuManager : Singleton<MenuManager>
 		nftlBalanceText.text = nftlBalance.ToString("n0");
 		nftlToBurnInputField.text = nftlToBurn.ToString("n0");
 	}
+}
+
+public enum LeaderboardType
+{
+	Weekly = 0,
+	Monthly = 1,
+	AllTime = 2
+}
+
+public class LeaderboardRow
+{
+	public string userId;
+	public string username;
+	public int score;
+	public string avatar;
 }
