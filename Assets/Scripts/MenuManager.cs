@@ -20,6 +20,7 @@ public class MenuManager : Singleton<MenuManager>
 	public GameObject burnPromptPanel;
 	public GameObject errorMessagePanel;
 	public GameObject connectingPanel;
+	public GameObject leaderboardLoadingPanel;
 	[Space]
 	public GameObject burnButton;
 	public GameObject helpButton;
@@ -158,6 +159,14 @@ public class MenuManager : Singleton<MenuManager>
 
 	private IEnumerator UpdateLeaderboardDisplay()
 	{
+		leaderboardLoadingPanel.SetActive(true);
+
+		for (int i = 0; i < 10; i++)
+		{
+			leaderboardNameText[i].text = "";
+			leaderboardAmountText[i].text = "";
+		}
+
 		switch (leaderboardType)
 		{
 			case LeaderboardType.Weekly:
@@ -186,6 +195,8 @@ public class MenuManager : Singleton<MenuManager>
 			leaderboardNameText[i].text = "---\n";
 			leaderboardAmountText[i].text = "---\n";
 		}
+
+		leaderboardLoadingPanel.SetActive(false);
 	}
 
 	IEnumerator FetchLeaderboardData(LeaderboardType type)
@@ -375,6 +386,8 @@ public class MenuManager : Singleton<MenuManager>
 	void ErrorMessage(string message)
 	{
 		CloseErrorMessage();
+
+		burnPromptPanel.SetActive(false);
 
 		errorMessageText.text = message;
 
