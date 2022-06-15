@@ -139,11 +139,6 @@ public class MenuManager : Singleton<MenuManager>
 		audioManager.PlaySound(AudioManager.SoundID.PressButton);
 	}
 
-	void UpdateLeaderboards()
-	{
-		DisplayLeaderboard();
-	}
-
 	public void ChangeCurrentLeaderboard()
 	{
 		CloseErrorMessage();
@@ -152,46 +147,30 @@ public class MenuManager : Singleton<MenuManager>
 		{
 			leaderboardType = LeaderboardType.Weekly;
 		}
-		DisplayLeaderboard();
+		UpdateLeaderboards();
 		audioManager.PlaySound(AudioManager.SoundID.PressButton);
 	}
 
-	void DisplayLeaderboard()
+	void UpdateLeaderboards()
 	{
 		StartCoroutine(UpdateLeaderboardDisplay());
-
-		//List<ObscuredString> leaderboardNames = new List<ObscuredString>();
-		//List<ObscuredUInt> leaderboardAmounts = new List<ObscuredUInt>();
-
-		//switch (leaderboardToShow)
-		//{
-		//	case 0:
-		//		leaderboardTitleText.text = "WEEKLY LEADERBOARD";
-		//		leaderboardNames = leaderboardWeeklyNames;
-		//		leaderboardAmounts = leaderboardWeeklyAmounts;
-		//		break;
-		//	case 1:
-		//		leaderboardTitleText.text = "MONTHLY LEADERBOARD";
-		//		leaderboardNames = leaderboardMonthlyNames;
-		//		leaderboardAmounts = leaderboardMonthlyAmounts;
-		//		break;
-		//	case 2:
-		//		leaderboardTitleText.text = "ALLTIME LEADERBOARD";
-		//		leaderboardNames = leaderboardAlltimeNames;
-		//		leaderboardAmounts = leaderboardAlltimeAmounts;
-		//		break;
-		//}
-
-		//for (int i = 0; i < 10; i++)
-		//{
-		//	string nextName = leaderboardNames[i];
-		//	leaderboardNameText[i].text = nextName.ToUpper();
-		//	leaderboardAmountText[i].text = leaderboardAmounts[i].ToString("n0");
-		//}
 	}
 
 	private IEnumerator UpdateLeaderboardDisplay()
 	{
+		switch (leaderboardType)
+		{
+			case LeaderboardType.Weekly:
+				leaderboardTitleText.text = "WEEKLY LEADERBOARD";
+				break;
+			case LeaderboardType.Monthly:
+				leaderboardTitleText.text = "MONTHLY LEADERBOARD";
+				break;
+			case LeaderboardType.AllTime:
+				leaderboardTitleText.text = "ALL TIME LEADERBOARD";
+				break;
+		}
+
 		// display loading
 		yield return FetchLeaderboardData(leaderboardType);
 		int count = 0;
@@ -213,7 +192,18 @@ public class MenuManager : Singleton<MenuManager>
 	{
 		leaderboardRows = new OrderedDictionary(10);
 		UnityWebRequest www = null;
-		yield return Utils.GetRequest("https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/scores?count=10&game=wen_game&score_type=score", (w) => www = w);
+		string lbType = "weekly";
+		switch (type)
+		{
+
+			case LeaderboardType.Monthly:
+				lbType = "monthly";
+				break;
+			case LeaderboardType.AllTime:
+				lbType = "all_time";
+				break;
+		}
+		yield return Utils.GetRequest($"https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/scores?count=10&game=wen_game&score_type=score&time_window={lbType}", (w) => www = w);
 		if (www.result != UnityWebRequest.Result.Success)
 		{
 			print("Failed to fetch leaderboard data");
