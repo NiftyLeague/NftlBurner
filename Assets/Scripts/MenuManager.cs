@@ -28,6 +28,7 @@ public class MenuManager : Singleton<MenuManager>
 	public ObscuredUInt nftlBalance;
 	public ObscuredUInt nftlToBurn;
 	[Space]
+	public TextMeshProUGUI burnConfirmationText;
 	public TextMeshProUGUI nftlBalanceText;
 	public TextMeshProUGUI errorMessageText;
 	public TMP_InputField nftlToBurnInputField;
@@ -48,6 +49,10 @@ public class MenuManager : Singleton<MenuManager>
 	public List<TextMeshProUGUI> leaderboardAmountText;
 	[Space]
 	public ObscuredBool cantConnect;
+	[Space]
+	public AudioSource jungleAudioSource;
+	public float jungleVolumeMax;
+	public float jungleVolume;
 
 	private Coroutine currentErrorMessageCoroutine;
 	private ObscuredBool isBurning;
@@ -63,13 +68,14 @@ public class MenuManager : Singleton<MenuManager>
 	private static OrderedDictionary leaderboardRows;
 
 	private void Start()
-    {
+	{
 		connectingPanel.SetActive(true);
 		leaderboardPanel.SetActive(false);
+		InvokeRepeating(nameof(ChangeJungleVolume), 0f, 5f);
 	}
 
-    private void Update()
-    {
+	private void Update()
+	{
 		if (burnPromptTimer > 0)
 		{
 			burnPromptTimer -= Time.deltaTime;
@@ -78,7 +84,13 @@ public class MenuManager : Singleton<MenuManager>
 				CloseBurnPrompt();
 			}
 		}
-    }
+		jungleAudioSource.volume = Mathf.Lerp(jungleAudioSource.volume, jungleVolume, Time.deltaTime);
+	}
+
+	private void ChangeJungleVolume()
+	{
+		jungleVolume = XRandom.NextFloat(jungleVolumeMax);
+	}
 
 	public void SetStatus(string statusMessage)
 	{
@@ -96,7 +108,7 @@ public class MenuManager : Singleton<MenuManager>
 		ConnectionSuccessful();
 	}
 
-    IEnumerator ConnectWallet()
+	IEnumerator ConnectWallet()
 	{
 		connectingPanel.SetActive(true);
 		leaderboardPanel.SetActive(false);
@@ -169,15 +181,15 @@ public class MenuManager : Singleton<MenuManager>
 
 		switch (leaderboardType)
 		{
-			case LeaderboardType.Weekly:
-				leaderboardTitleText.text = "WEEKLY LEADERBOARD";
-				break;
-			case LeaderboardType.Monthly:
-				leaderboardTitleText.text = "MONTHLY LEADERBOARD";
-				break;
-			case LeaderboardType.AllTime:
-				leaderboardTitleText.text = "ALL TIME LEADERBOARD";
-				break;
+		case LeaderboardType.Weekly:
+			leaderboardTitleText.text = "WEEKLY LEADERBOARD";
+			break;
+		case LeaderboardType.Monthly:
+			leaderboardTitleText.text = "MONTHLY LEADERBOARD";
+			break;
+		case LeaderboardType.AllTime:
+			leaderboardTitleText.text = "ALL TIME LEADERBOARD";
+			break;
 		}
 
 		// display loading
@@ -207,12 +219,12 @@ public class MenuManager : Singleton<MenuManager>
 		switch (type)
 		{
 
-			case LeaderboardType.Monthly:
-				lbType = "monthly";
-				break;
-			case LeaderboardType.AllTime:
-				lbType = "all_time";
-				break;
+		case LeaderboardType.Monthly:
+			lbType = "monthly";
+			break;
+		case LeaderboardType.AllTime:
+			lbType = "all_time";
+			break;
 		}
 		yield return Utils.GetRequest($"https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/scores?count=10&game=wen_game&score_type=score&time_window={lbType}", (w) => www = w);
 		if (www.result != UnityWebRequest.Result.Success)
@@ -277,9 +289,9 @@ public class MenuManager : Singleton<MenuManager>
 			return;
 		}
 
-		if (nftlToBurn <= 0)
+		if (nftlToBurn < 100)
 		{
-			ErrorMessage("Must input more than 0 NFTL to burn!");
+			ErrorMessage("MINIMUM BURN AMOUNT IS 100 NFTL!");
 			return;
 		}
 
@@ -294,6 +306,7 @@ public class MenuManager : Singleton<MenuManager>
 		}
 
 		burnPromptPanel.SetActive(true);
+		burnConfirmationText.text = $"ARE YOU SURE YOU WANT TO BURN {nftlToBurn:n0} NFTL?\n\nPRESS BURN AGAIN TO CONFIRM".ToUpper();
 		burnPromptTimer = 10;
 		audioManager.PlaySound(AudioManager.SoundID.PressButton);
 	}
@@ -316,7 +329,7 @@ public class MenuManager : Singleton<MenuManager>
 
 	public void HoverOverButton()
 	{
-		audioManager.PlaySound(AudioManager.SoundID.hoverOverButton);
+		audioManager.PlaySound(AudioManager.SoundID.HoverOverButton);
 	}
 
 	public void SetToBurnAmount(string amount)
@@ -340,7 +353,7 @@ public class MenuManager : Singleton<MenuManager>
 
 		UpdateNFTLAmountTexts();
 
-		audioManager.PlaySound(AudioManager.SoundID.hoverOverButton);
+		audioManager.PlaySound(AudioManager.SoundID.HoverOverButton);
 	}
 
 	void ChangeBurnButtonState(bool pressed)
@@ -363,43 +376,45 @@ public class MenuManager : Singleton<MenuManager>
 	IEnumerator BurnTokens()
 	{
 		isBurning = true;
-
 		ChangeBurnButtonState(true);
 
-		burningAnim.Play(burningBurnAnimation, false);
+		burningAnim.Play(burningBurnAnimation, true);
 
-		yield return new WaitForSeconds(14.7f);
+		yield return new WaitUntil(() => burningAnim.GetFrame() >= 7);
+		audioManager.PlaySound(AudioManager.SoundID.Whoosh);
 
+		yield return new WaitUntil(() => burningAnim.GetFrame() >= 14);
+		audioManager.PlaySound(AudioManager.SoundID.Squeeze);
+
+		yield return new WaitUntil(() => burningAnim.GetFrame() >= 29);
+		audioManager.PlaySound(AudioManager.SoundID.Sparkle);
+
+		yield return new WaitUntil(() => burningAnim.GetFrame() >= 46);
+		audioManager.PlaySound(AudioManager.SoundID.Eruption);
+
+		yield return new WaitUntil(() => burningAnim.GetProgress() >= 1f);
 		burningAnim.Play(burningIdleAnimation, false);
 
 		yield return SubmitTokenBurn();
-
 		yield return Launcher.I.RefreshNFTLBalance();
 
 		UpdateLeaderboards();
-
 		isBurning = false;
-
 		ChangeBurnButtonState(false);
 	}
 
 	void ErrorMessage(string message)
 	{
 		CloseErrorMessage();
-
 		burnPromptPanel.SetActive(false);
-
-		errorMessageText.text = message;
-
+		errorMessageText.text = message.ToUpper();
 		currentErrorMessageCoroutine = StartCoroutine(ErrorMessagePlay());
-
 		audioManager.PlaySound(AudioManager.SoundID.ErrorMessage);
 	}
 
 	void CloseErrorMessage()
 	{
 		errorMessagePanel.SetActive(false);
-
 		if (currentErrorMessageCoroutine != null)
 		{
 			StopCoroutine(currentErrorMessageCoroutine);
@@ -409,9 +424,7 @@ public class MenuManager : Singleton<MenuManager>
 	IEnumerator ErrorMessagePlay()
 	{
 		errorMessagePanel.SetActive(true);
-
 		yield return new WaitForSeconds(5);
-
 		errorMessagePanel.SetActive(false);
 	}
 

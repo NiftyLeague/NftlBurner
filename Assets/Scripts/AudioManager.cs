@@ -61,8 +61,12 @@ public class AudioManager : MonoBehaviour
     public enum SoundID
     {
         None,
-        hoverOverButton,
+        HoverOverButton,
         PressButton,
         ErrorMessage,
-    }
+		Eruption,
+		Sparkle,
+		Squeeze,
+		Whoosh
+	}
 }

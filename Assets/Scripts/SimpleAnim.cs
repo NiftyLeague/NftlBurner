@@ -89,10 +89,23 @@ public class SimpleAnim : MonoBehaviour
 				}
 				else
 				{
-					Destroy(gameObject);
+					if (!stayAfterPlayOnce)
+					{
+						Destroy(gameObject);
+					}
 				}
 			}
 		}
+	}
+
+	public float GetProgress()
+	{
+		return frames != null && frames.Length > 0 ? frame / frames.Length : 0f;
+	}
+
+	public int GetFrame()
+	{
+		return frame;
 	}
 
 	private void SetFrame(Sprite sprite)
