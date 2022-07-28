@@ -57,6 +57,7 @@ public class MenuManager : Singleton<MenuManager>
 	private Coroutine currentErrorMessageCoroutine;
 	private ObscuredBool isBurning;
 	private ObscuredFloat burnPromptTimer;
+	private ObscuredString burnTokenId;
 
 	List<ObscuredString> leaderboardWeeklyNames;
 	List<ObscuredUInt> leaderboardWeeklyAmounts;
@@ -72,6 +73,8 @@ public class MenuManager : Singleton<MenuManager>
 		connectingPanel.SetActive(true);
 		leaderboardPanel.SetActive(false);
 		InvokeRepeating(nameof(ChangeJungleVolume), 0f, 5f);
+		leaderboardType = LeaderboardType.AllTime;
+		burnTokenId = "";
 	}
 
 	private void Update()
@@ -156,9 +159,9 @@ public class MenuManager : Singleton<MenuManager>
 	{
 		CloseErrorMessage();
 		leaderboardType++;
-		if (leaderboardType > LeaderboardType.AllTime)
+		if (leaderboardType > LeaderboardType.Monthly)
 		{
-			leaderboardType = LeaderboardType.Weekly;
+			leaderboardType = LeaderboardType.AllTime;
 		}
 		UpdateLeaderboards();
 		audioManager.PlaySound(AudioManager.SoundID.PressButton);
@@ -181,9 +184,9 @@ public class MenuManager : Singleton<MenuManager>
 
 		switch (leaderboardType)
 		{
-		case LeaderboardType.Weekly:
-			leaderboardTitleText.text = "WEEKLY LEADERBOARD";
-			break;
+		//case LeaderboardType.Weekly:
+		//	leaderboardTitleText.text = "WEEKLY LEADERBOARD";
+		//	break;
 		case LeaderboardType.Monthly:
 			leaderboardTitleText.text = "MONTHLY LEADERBOARD";
 			break;
@@ -215,7 +218,7 @@ public class MenuManager : Singleton<MenuManager>
 	{
 		leaderboardRows = new OrderedDictionary(10);
 		UnityWebRequest www = null;
-		string lbType = "weekly";
+		string lbType = "all_time";
 		switch (type)
 		{
 
@@ -226,7 +229,7 @@ public class MenuManager : Singleton<MenuManager>
 			lbType = "all_time";
 			break;
 		}
-		yield return Utils.GetRequest($"https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/scores?count=10&game=wen_game&score_type=score&time_window={lbType}", (w) => www = w);
+		yield return Utils.GetRequest($"https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/scores?count=10&game=nftl_burner&score_type=score&time_window={lbType}", (w) => www = w);
 		if (www.result != UnityWebRequest.Result.Success)
 		{
 			print("Failed to fetch leaderboard data");
@@ -373,30 +376,39 @@ public class MenuManager : Singleton<MenuManager>
 		leaderboardPanel.SetActive(!pressed);
 	}
 
+
 	IEnumerator BurnTokens()
 	{
 		isBurning = true;
 		ChangeBurnButtonState(true);
 
+		burnTokenId = "";
+		yield return SubmitTokenBurn();
+		if (string.IsNullOrEmpty(burnTokenId))
+		{
+			isBurning = false;
+			ChangeBurnButtonState(false);
+			yield break;
+		}
+		print(burnTokenId);
+		yield return Launcher.I.RefreshNFTLBalance();
+
 		burningAnim.Play(burningBurnAnimation, true);
 
 		yield return new WaitUntil(() => burningAnim.GetFrame() >= 7);
-		audioManager.PlaySound(AudioManager.SoundID.Whoosh);
+		audioManager.PlaySound(AudioManager.SoundID.Whoosh, 0.5f);
 
 		yield return new WaitUntil(() => burningAnim.GetFrame() >= 14);
-		audioManager.PlaySound(AudioManager.SoundID.Squeeze);
+		audioManager.PlaySound(AudioManager.SoundID.Squeeze, 0.5f);
 
 		yield return new WaitUntil(() => burningAnim.GetFrame() >= 29);
-		audioManager.PlaySound(AudioManager.SoundID.Sparkle);
+		audioManager.PlaySound(AudioManager.SoundID.Sparkle, 0.7f);
 
 		yield return new WaitUntil(() => burningAnim.GetFrame() >= 46);
-		audioManager.PlaySound(AudioManager.SoundID.Eruption);
+		audioManager.PlaySound(AudioManager.SoundID.Eruption, 1f);
 
 		yield return new WaitUntil(() => burningAnim.GetProgress() >= 1f);
 		burningAnim.Play(burningIdleAnimation, false);
-
-		yield return SubmitTokenBurn();
-		yield return Launcher.I.RefreshNFTLBalance();
 
 		UpdateLeaderboards();
 		isBurning = false;
@@ -435,21 +447,29 @@ public class MenuManager : Singleton<MenuManager>
 		{
 			{ "authorizationToken", NiftyUsers.GetMyAuthorization() },
 		};
-		byte[] data = Encoding.ASCII.GetBytes(@"{
-			'id': 'token-burn',
-			'currency': 'nftl',
-			'price': nftlToBurn
-		}".Replace('\'', '"'));
-		yield return Utils.PostRequest("www.google.com", data, (w) => www = w, headers);
+		string data = $"{{ 'amount': {nftlToBurn} }}".Replace('\'', '"');
+		yield return Utils.PostRequest("https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/matches/nftl-burner/burn", Encoding.ASCII.GetBytes(data), (w) => www = w, headers);
 
 		if (www.result != UnityWebRequest.Result.Success)
 		{
-			print("Failed to fetch inventory");
+			if (www.responseCode == 400)
+			{
+				ErrorMessage(www.downloadHandler.text);
+			}
+			else
+			{
+				print(www.error);
+				ErrorMessage("Failed to Burn!");
+			}
 			yield break;
 		}
 		else
 		{
 			print(www.downloadHandler.text);
+			if (www.downloadHandler.text.Contains("amount") && www.downloadHandler.text.Contains(nftlToBurn.ToString()))
+			{
+				burnTokenId = www.downloadHandler.text;
+			}
 		}
 	}
 
@@ -462,9 +482,8 @@ public class MenuManager : Singleton<MenuManager>
 
 public enum LeaderboardType
 {
-	Weekly = 0,
-	Monthly = 1,
-	AllTime = 2
+	AllTime = 0,
+	Monthly = 1
 }
 
 public class LeaderboardRow

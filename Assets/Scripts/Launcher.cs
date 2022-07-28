@@ -623,15 +623,14 @@ MinAllowedVersion,0.1.1,Please Upgrade To the Latest Version
 		{
 			{ "authorizationToken", NiftyUsers.GetMyAuthorization() },
 		};
-		yield return Utils.PostJsonRequest("https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/accounts/session", @$"{{""session"":""{sessionId}""}}", (w) => www = w, headers);
-		if (www.result != UnityWebRequest.Result.Success)
-		{
-			Fail("Failed to obtain session");
-			yield break;
-		}
+		//yield return Utils.PostJsonRequest("https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/accounts/session", @$"{{""session"":""{sessionId}""}}", (w) => www = w, headers);
+		//if (www.result != UnityWebRequest.Result.Success)
+		//{
+		//	Fail("Failed to obtain session");
+		//	yield break;
+		//}
 
 		www = null;
-		bool isValidSession = false;
 		bool isBanned = false;
 		uint balance = 0;
 		yield return Utils.GetRequest("https://odgwhiwhzb.execute-api.us-east-1.amazonaws.com/prod/accounts/account", (w) => www = w, headers);
@@ -646,13 +645,8 @@ MinAllowedVersion,0.1.1,Please Upgrade To the Latest Version
 			{
 				JObject account = JObject.Parse(www.downloadHandler.text);
 				isBanned = account["is_banned"] != null && account["is_banned"].Value<bool>();
-				isValidSession = account["session_key"].Value<string>() == sessionId;
-
 			}
-			catch
-			{
-				isValidSession = false;
-			}
+			catch { }
 		}
 
 		if (isBanned)
@@ -661,17 +655,9 @@ MinAllowedVersion,0.1.1,Please Upgrade To the Latest Version
 			yield break;
 		}
 
-		if (!isValidSession)
-		{
-			Fail("Invalid Session\nPlease Try Again");
-			yield break;
-		}
-
 		user.SetBalance(balance);
 
 		yield return RefreshNFTLBalance();
-		//yield return GetDegens();
-
 		ProfileDegensReady();
 	}
 
