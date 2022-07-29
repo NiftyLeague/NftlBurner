@@ -286,6 +286,7 @@ public class MenuManager : Singleton<MenuManager>
 
 	public void BurnButton()
 	{
+		Analytics.SendPlayerEvent("BurnClicked", new Dictionary<string, string>() { { "Amount", nftlToBurn.ToString() } });
 		if (isBurning)
 		{
 			ErrorMessage("You're already burning some tokens!");
@@ -390,7 +391,7 @@ public class MenuManager : Singleton<MenuManager>
 			ChangeBurnButtonState(false);
 			yield break;
 		}
-		print(burnTokenId);
+		Analytics.SendPlayerEvent("BurnStarted", new Dictionary<string, string>() { { "Amount", nftlToBurn.ToString() } });
 		yield return Launcher.I.RefreshNFTLBalance();
 
 		burningAnim.Play(burningBurnAnimation, true);

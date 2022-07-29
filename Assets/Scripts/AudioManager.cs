@@ -33,7 +33,7 @@ public class AudioManager : MonoBehaviour
 		hasInitializedSoundDictionary = true;
 	}
 
-	public void PlaySound(SoundID soundID, float volume = 0.2f)
+	public void PlaySound(SoundID soundID, float volume = 0.15f)
 	{
 		List<AudioSource> audioSourcesInSound = soundDictionary[soundID].audioSources;
 		AudioSource soundEffectSource = audioSourcesInSound[UnityEngine.Random.Range(0, audioSourcesInSound.Count)];
