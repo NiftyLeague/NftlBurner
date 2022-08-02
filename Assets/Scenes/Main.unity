@@ -2435,42 +2435,26 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Welcome to the Nifty League NFTL BURNER!
-
-    Are you ready to commit
-    your NFTL to the fiery innards of Rugman''s Peak?
-
-    Burn enough and you can
-    get to the TOP 10 LEADERBOARD!
+  m_text: 'Welcome to Mt. Gawx!!
 
 
-    Step 1. Click on ''CONNECT WALLET'' to connect
-    your crypto wallet.
+    Are you ready to commit your NFTL to the fiery
+    innards of Mt. Gawx''s Peak?
 
-
-    Step 2. Type in how much NFTL you''d like to burn in
-    the field below ''NFTL TO BURN''
-
-
-    Step 3. Click the big BURN! button to
-    burn your NFTL
-
-
-    Step 4. Enjoy the animation of the DEGEN releasing NFTL
-    into the gaping maw of Rugman''s Peak.
-
-
-    Step 5. If you crack the LEADERBOARD
-    you''ll be prompted to type your name to be displayed in the TOP 10.
+    Burn enough and you can get to the TOP 10 LEADERBOARD!
 
 
     Step
-    6. You can burn more NFTL if you like! Any amounts will be added to the wallet''s
-    overall burned amount to determine leaderboard rankings.
+    1. Type in how much NFTL you''d like to burn in the field below ''NFTL TO BURN''
 
 
-    *Please Note:
-    there is a GAS fee for every burn.
+    Step
+    2. Click the big BURN! button to burn your NFTL
+
+
+    You can burn more NFTL
+    if you like! Any amounts will be added to the wallet''s overall burned amount
+    to determine leaderboard rankings.
 
 
     Your NFTL will be added to the global
@@ -2501,8 +2485,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 4
-  m_fontSizeBase: 4
+  m_fontSize: 5.5
+  m_fontSizeBase: 5.5
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2513,7 +2497,7 @@ MonoBehaviour:
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
-  m_lineSpacing: 0
+  m_lineSpacing: -4
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
