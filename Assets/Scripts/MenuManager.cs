@@ -92,7 +92,7 @@ public class MenuManager : Singleton<MenuManager>
 			burnButton.SetActive(false);
 			volcanoAudioSource.Stop();
 			burningAnim.Play(closedVolcanoIdleAnimation, false);
-			burningAnim.animSpeed = 1f;
+			burningAnim.animSpeed = 0.2f;
 			closedVolcanoCat.SetActive(true);
 		}
 
@@ -310,7 +310,7 @@ public class MenuManager : Singleton<MenuManager>
 	{
 		if (turnOffVolcano)
 		{
-			ErrorMessage("The volcano is not currently active.");
+			ErrorMessage("The volcano is currently not active");
 			return;
 		}
 
