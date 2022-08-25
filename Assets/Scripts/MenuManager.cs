@@ -48,6 +48,7 @@ public class MenuManager : Singleton<MenuManager>
 	public Sprite[] burningIdleAnimation;
 	public Sprite[] burningBurnAnimation;
 	public Sprite[] closedVolcanoIdleAnimation;
+	public GameObject closedVolcanoCat;
 	[Space]
 	public TextMeshProUGUI leaderboardTitleText;
 	public List<TextMeshProUGUI> leaderboardNameText;
@@ -91,6 +92,8 @@ public class MenuManager : Singleton<MenuManager>
 			burnButton.SetActive(false);
 			volcanoAudioSource.Stop();
 			burningAnim.Play(closedVolcanoIdleAnimation, false);
+			burningAnim.animSpeed = 1f;
+			closedVolcanoCat.SetActive(true);
 		}
 
 		closedBurnButton.SetActive(turnOffVolcano);
