@@ -23,6 +23,7 @@ public class MenuManager : Singleton<MenuManager>
 	public GameObject leaderboardLoadingPanel;
 	[Space]
 	public GameObject burnButton;
+	public GameObject closedBurnButton;
 	public GameObject helpButton;
 	[Space]
 	public ObscuredUInt nftlBalance;
@@ -37,12 +38,16 @@ public class MenuManager : Singleton<MenuManager>
 	public TweenEaseType textTweenType;
 	public float textTweenDuration;
 	[Space]
+	public Image burnButtonImage;
 	public SimpleAnim burnButtonAnim;
+	public Sprite burnButtonDefaultSprite;
+	public Sprite burnButtonClosedSprite;
 	public Sprite[] burnButtonIdleAnimation;
 	public Sprite[] burnButtonPressedAnimation;
 	public SimpleAnim burningAnim;
 	public Sprite[] burningIdleAnimation;
 	public Sprite[] burningBurnAnimation;
+	public Sprite[] closedVolcanoIdleAnimation;
 	[Space]
 	public TextMeshProUGUI leaderboardTitleText;
 	public List<TextMeshProUGUI> leaderboardNameText;
@@ -53,6 +58,10 @@ public class MenuManager : Singleton<MenuManager>
 	public AudioSource jungleAudioSource;
 	public float jungleVolumeMax;
 	public float jungleVolume;
+	[Space]
+	public AudioSource volcanoAudioSource;
+	[Space]
+	public ObscuredBool turnOffVolcano;
 
 	private Coroutine currentErrorMessageCoroutine;
 	private ObscuredBool isBurning;
@@ -75,6 +84,16 @@ public class MenuManager : Singleton<MenuManager>
 		InvokeRepeating(nameof(ChangeJungleVolume), 0f, 5f);
 		leaderboardType = LeaderboardType.AllTime;
 		burnTokenId = "";
+
+		if (turnOffVolcano)
+		{
+			burnButtonImage.sprite = burnButtonClosedSprite;
+			burnButton.SetActive(false);
+			volcanoAudioSource.Stop();
+			burningAnim.Play(closedVolcanoIdleAnimation, false);
+		}
+
+		closedBurnButton.SetActive(turnOffVolcano);
 	}
 
 	private void Update()
@@ -286,6 +305,12 @@ public class MenuManager : Singleton<MenuManager>
 
 	public void BurnButton()
 	{
+		if (turnOffVolcano)
+		{
+			ErrorMessage("The volcano is not currently active.");
+			return;
+		}
+
 		Analytics.SendPlayerEvent("BurnClicked", new Dictionary<string, string>() { { "Amount", nftlToBurn.ToString() } });
 		if (isBurning)
 		{
